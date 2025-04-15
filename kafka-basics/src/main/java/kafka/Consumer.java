@@ -1,0 +1,62 @@
+package kafka;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Properties;
+
+import org.example.EnvConfig;
+
+public class Consumer {
+
+    private static final Logger logger = LoggerFactory.getLogger(Consumer.class.getSimpleName());
+
+    public static void main(String[] args) {
+        logger.info("Kafka Consumer Example");
+
+        String groupId = "my-java-application";
+        String topic = "my_topic";
+
+        // Create a properties object
+        Properties properties = new Properties();
+
+        // Set the properties for the producer
+        properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, EnvConfig.BOOTSTRAP_SERVERS);
+
+        // Create consumer config
+        properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+
+        // earliest ~ start from beginning of topic
+        // latest ~ start from end of topic
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        // Create a Kafka consumer
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
+
+        // Subscribe to a topic
+        consumer.subscribe(List.of(topic));
+
+        // Poll for new data
+
+        while (true) {
+            logger.info("Polling");
+
+
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+
+            // Loop through the records
+            records.forEach(record -> {
+                logger.info("Key: {}, Value: {}", record.key(), record.value());
+                logger.info("Partition: {}, Offset: {}", record.partition(), record.offset());
+            });
+        }
+    }
+}
